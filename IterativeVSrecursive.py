@@ -2,6 +2,8 @@ import time
 import psutil
 import os
 import sys
+import tkinter as tk
+from tkinter import ttk
 
 # Increase recursion limit for testing higher n values with recursion
 sys.setrecursionlimit(10000)
@@ -59,39 +61,57 @@ def measure_time_and_memory(n):
 
 # Function to find the maximum n where both methods can process
 def find_max_survival(n_values):
-    max_iterative_n = None
-    max_recursive_n = None
+    results_list = []
 
     for n in n_values:
-        print(f"Testing n={n}...")
-
         # Measure time and memory for both methods
         results = measure_time_and_memory(n)
 
-        # Check if iterative method was successful
-        if results['iterative_time'] is not None:
-            max_iterative_n = n
-            print(f"Iterative: n={n}, Time: {results['iterative_time']:.6f} s, Memory: {results['iterative_memory']:.6f} MB")
-        else:
-            print(f"Iterative method failed for n={n}")
+        # Store results
+        results_list.append({
+            'n': n,
+            'iterative_time': results['iterative_time'],
+            'iterative_memory': results['iterative_memory'],
+            'recursive_time': results['recursive_time'],
+            'recursive_memory': results['recursive_memory'],
+        })
 
-        # Check if recursive method was successful
-        if results['recursive_time'] is not None:
-            max_recursive_n = n
-            print(f"Recursive: n={n}, Time: {results['recursive_time']:.6f} s, Memory: {results['recursive_memory']:.6f} MB")
-        else:
-            print(f"Recursive method failed for n={n}")
-        
-        print("-" * 50)
+    return results_list
 
-    return max_iterative_n, max_recursive_n
+# Function to display results in the GUI
+def display_results():
+    # Clear the tree
+    for row in tree.get_children():
+        tree.delete(row)
+
+    # Get results and insert into the table
+    results = find_max_survival(n_values)
+    for result in results:
+        tree.insert("", "end", values=(result['n'],
+                                        f"{result['iterative_time']:.6f}" if result['iterative_time'] is not None else "Failed",
+                                        f"{result['iterative_memory']:.6f}" if result['iterative_memory'] is not None else "Failed",
+                                        f"{result['recursive_time']:.6f}" if result['recursive_time'] is not None else "Failed",
+                                        f"{result['recursive_memory']:.6f}" if result['recursive_memory'] is not None else "Failed"))
 
 # List of n values to test
 n_values = [10, 100, 150, 200, 250, 500, 1000, 1500, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]
 
-# Start testing
-max_iterative, max_recursive = find_max_survival(n_values)
+# Create the main window
+root = tk.Tk()
+root.title("Factorial Time and Memory Usage")
 
-# Display final results
-print(f"Maximum n for Iterative Method: {max_iterative}")
-print(f"Maximum n for Recursive Method: {max_recursive}")
+# Create a treeview to display results in a form of Table
+tree = ttk.Treeview(root, columns=("n", "Iterative Time (s)", "Iterative Memory (MB)", "Recursive Time (s)", "Recursive Memory (MB)"), show='headings')
+tree.heading("n", text="n")
+tree.heading("Iterative Time (s)", text="Iterative Time (s)")
+tree.heading("Iterative Memory (MB)", text="Iterative Memory (MB)")
+tree.heading("Recursive Time (s)", text="Recursive Time (s)")
+tree.heading("Recursive Memory (MB)", text="Recursive Memory (MB)")
+tree.pack(fill=tk.BOTH, expand=True)
+
+# Add a button to start the calculation
+button = tk.Button(root, text="Calculate", command=display_results)
+button.pack(pady=10)
+
+# Start the GUI event loop
+root.mainloop()
